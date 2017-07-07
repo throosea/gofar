@@ -30,7 +30,6 @@ import (
 	"throosea.com/gofar/lib"
 	"io/ioutil"
 	"strings"
-	"time"
 	"encoding/json"
 )
 
@@ -39,7 +38,7 @@ var binprefix string
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "you have to specify program name\n")
+		fmt.Fprintf(os.Stderr, "you have to specify program name. e.g) gofar mmbatch linux_amd64\n")
 		return
 	}
 	proc := os.Args[1]
@@ -65,8 +64,9 @@ func main() {
 	farDir := filepath.Join(gopath, "far", proc)
 
 	lib.EnsureDirectory(farDir)
-	farName := time.Now().Format("2006-01-02_15-04-05.far")
-	farName = fmt.Sprintf("%s_%s", proc, farName)
+	//farName := time.Now().Format("2006-01-02_15-04-05.far")
+	//farName = fmt.Sprintf("%s_%s", proc, farName)
+	farName := fmt.Sprintf("%s.far", proc)
 	farPath := filepath.Join(farDir, farName)
 
 	fmt.Printf("target : %s\n", farPath)
