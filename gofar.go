@@ -35,6 +35,7 @@ import (
 
 var resourceList []string
 var binprefix string
+var processType = "GENERAL"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -62,6 +63,8 @@ func main() {
 	}
 
 	farDir := filepath.Join(gopath, "far", proc)
+
+	determineProcessType(proc)
 
 	lib.EnsureDirectory(farDir)
 	//farName := time.Now().Format("2006-01-02_15-04-05.far")
@@ -99,6 +102,7 @@ func main() {
 	// create deployment.json
 	m := make(map[string]string)
 	m["process"] = proc
+	m["process_type"] = processType
 	b, err := json.Marshal(m)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", e.Error())
@@ -156,6 +160,17 @@ func findPropertyFromSrc(proc string, path string) {
 	for _, dir := range dirList {
 		findPropertyFromSrc(proc, filepath.Join(path, dir.Name()))
 		if len(resourceList) > 0 {
+			return
+		}
+	}
+}
+
+func determineProcessType(proc string) {
+	target := proc + ".ui.xml"
+
+	for _, file := range resourceList {
+		if filepath.Base(file) == target {
+			processType = "USER_INTERACTIVE"
 			return
 		}
 	}
