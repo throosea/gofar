@@ -115,13 +115,11 @@ func main() {
 		return
 	}
 
-	//fmt.Printf("check tmp dir %s\n", tmpDir)
-
 	lib.Zipit(tmpDir, farPath)
 	fmt.Printf("Finished far zip : %s\n", farPath)
 }
 
-var includeSuffixList = [...]string{"properties", "xml", "json", "yaml"}
+var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh"}
 
 func findPropertyFromSrc(proc string, path string) {
 	candidate := false
