@@ -31,6 +31,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"encoding/json"
+	"time"
 )
 
 var resourceList []string
@@ -56,7 +57,7 @@ func main() {
 
 	fmt.Printf("binpath : %s\n", binpath)
 	resourceList = make([]string, 0)
-	findPropertyFromSrc(proc + ".", filepath.Join(gopath, "src"))
+	foundDir := findPropertyFromSrc(proc + ".", filepath.Join(gopath, "src"))
 	if len(resourceList) == 0 {
 		fmt.Fprintf(os.Stderr, "not found %s resource\n", proc)
 		return
@@ -100,9 +101,24 @@ func main() {
 	}
 
 	// create deployment.json
-	m := make(map[string]string)
+	m := make(map[string]interface{})
 	m["process"] = proc
 	m["process_type"] = processType
+	build := make(map[string]interface{})
+	zoneName, _ := time.Now().Zone()
+	build["time"] = time.Now().Format(yyyyMMddHHmmss) + " " + zoneName
+	fmt.Printf("srcDir : %s\n", foundDir)
+	gitBranch := lib.ReadGitBranch(foundDir)
+	if len(gitBranch) > 0 {
+		git := make(map[string]string)
+		git["branch"] = gitBranch
+		gitCommit := lib.ReadGitCommit(foundDir, gitBranch)
+		git["commit"] = gitCommit
+		fmt.Printf("mark build info : branch=%s, commit=%s\n", gitBranch, gitCommit)
+		build["git"] = git
+	}
+	m["build"] = build
+
 	b, err := json.Marshal(m)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", e.Error())
@@ -119,9 +135,14 @@ func main() {
 	fmt.Printf("Finished far zip : %s\n", farPath)
 }
 
+const (
+	yyyyMMddHHmmss = "2006-01-02 15:04:05"
+)
+
 var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh"}
 
-func findPropertyFromSrc(proc string, path string) {
+func findPropertyFromSrc(proc string, path string) string {
+	foundDir := path
 	candidate := false
 	if strings.HasPrefix(proc, filepath.Base(path)) {
 		candidate = true
@@ -129,7 +150,7 @@ func findPropertyFromSrc(proc string, path string) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "fail to read dir : %s\n", err.Error())
-		return
+		return foundDir
 	}
 
 	dirList := make([]os.FileInfo, 0)
@@ -152,15 +173,17 @@ func findPropertyFromSrc(proc string, path string) {
 	}
 
 	if len(resourceList) > 0 {
-		return
+		return foundDir
 	}
 
 	for _, dir := range dirList {
-		findPropertyFromSrc(proc, filepath.Join(path, dir.Name()))
+		foundDir = findPropertyFromSrc(proc, filepath.Join(path, dir.Name()))
 		if len(resourceList) > 0 {
-			return
+			return foundDir
 		}
 	}
+
+	return foundDir
 }
 
 func determineProcessType(proc string) {

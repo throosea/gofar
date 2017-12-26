@@ -30,6 +30,7 @@ import (
 	"io"
 	"strings"
 	"archive/zip"
+	"io/ioutil"
 )
 
 func EnsureBinary(binprefix string, proc string, gopathDir string) (string, error) {
@@ -155,4 +156,27 @@ func Zipit(source, target string) error {
 	})
 
 	return err
+}
+
+func ReadGitBranch(srcDir string) string	{
+	headFile := filepath.Join(srcDir, ".git", "HEAD")
+
+	dat, err := ioutil.ReadFile(headFile)
+	if err != nil {
+		return ""
+	}
+
+	head := strings.Trim(string(dat), " \r\n\t")
+	idx := strings.LastIndex(head, "/")
+	return head[idx+1:]
+}
+
+func ReadGitCommit(srcDir string, branch string) string {
+	commitFile := filepath.Join(srcDir, ".git", "refs", "heads", branch)
+	dat, err := ioutil.ReadFile(commitFile)
+	if err != nil {
+		return ""
+	}
+
+	return string(dat)[:12]
 }
