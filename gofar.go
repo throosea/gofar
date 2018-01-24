@@ -107,6 +107,13 @@ func main() {
 	build := make(map[string]interface{})
 	zoneName, _ := time.Now().Zone()
 	build["time"] = time.Now().Format(yyyyMMddHHmmss) + " " + zoneName
+	// find author
+	user, err := lib.ExecuteShell("whoami")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "whoami error : %s\n", err.Error())
+		user = "unknown"
+	}
+	build["user"] = strings.TrimSpace(user)
 	fmt.Printf("srcDir : %s\n", foundDir)
 	gitBranch := lib.ReadGitBranch(foundDir)
 	if len(gitBranch) > 0 {
@@ -127,7 +134,7 @@ func main() {
 	depfile := filepath.Join(tmpDir, "deployment.json")
 	err = ioutil.WriteFile(depfile, b, 0644)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", e.Error())
+		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		return
 	}
 

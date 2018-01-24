@@ -31,6 +31,9 @@ import (
 	"strings"
 	"archive/zip"
 	"io/ioutil"
+	"errors"
+	"os/exec"
+	"bytes"
 )
 
 func EnsureBinary(binprefix string, proc string, gopathDir string) (string, error) {
@@ -179,4 +182,30 @@ func ReadGitCommit(srcDir string, branch string) string {
 	}
 
 	return string(dat)[:12]
+}
+
+func ExecuteShell(command string) (string, error) {
+	if len(command) == 0 {
+		return "", errors.New("empty command")
+	}
+
+	var cmd *exec.Cmd
+	cmd = exec.Command("/bin/sh", "-c", command)
+	//s := regexp.MustCompile("\\s+").Split(command, -1)
+	//i := len(s)
+	//if i == 0 {
+	//	return "", errors.New("empty command")
+	//} else if i == 1 {
+	//	cmd = exec.Command(s[0])
+	//} else {
+	//	cmd = exec.Command(s[0], s[1:]...)
+	//}
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	return out.String(), nil
 }
