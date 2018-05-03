@@ -57,7 +57,8 @@ func main() {
 
 	fmt.Printf("binpath : %s\n", binpath)
 	resourceList = make([]string, 0)
-	foundDir := findPropertyFromSrc(proc + ".", filepath.Join(gopath, "src"))
+	//foundDir := findPropertyFromSrc(proc + ".", filepath.Join(gopath, "src"))
+	foundDir := findPropertyFromSrc(proc, filepath.Join(gopath, "src"))
 	if len(resourceList) == 0 {
 		fmt.Fprintf(os.Stderr, "not found %s resource\n", proc)
 		return
@@ -151,7 +152,8 @@ var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh"}
 func findPropertyFromSrc(proc string, path string) string {
 	foundDir := path
 	candidate := false
-	if strings.HasPrefix(proc, filepath.Base(path)) {
+	//if strings.HasPrefix(proc, filepath.Base(path)) {
+	if filepath.Base(path) == proc {
 		candidate = true
 	}
 	files, err := ioutil.ReadDir(path)
