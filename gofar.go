@@ -155,6 +155,8 @@ func findPropertyFromSrc(proc string, path string) string {
 	//if strings.HasPrefix(proc, filepath.Base(path)) {
 	if filepath.Base(path) == proc {
 		candidate = true
+	} else if filepath.Base(path) == "cmd" {
+		candidate = true
 	}
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
