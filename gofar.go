@@ -55,7 +55,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("binpath : %s\n", binpath)
+	fmt.Printf("binpath : %s (%s)\n", binpath, getFileModtime(binpath))
 	resourceList = make([]string, 0)
 	//foundDir := findPropertyFromSrc(proc + ".", filepath.Join(gopath, "src"))
 	foundDir := findPropertyFromSrc(proc, filepath.Join(gopath, "src"))
@@ -156,7 +156,9 @@ func findPropertyFromSrc(proc string, path string) string {
 	if filepath.Base(path) == proc {
 		candidate = true
 	} else if filepath.Base(path) == "cmd" {
-		candidate = true
+		if pathHasProcName(path, proc) {
+			candidate = true
+		}
 	}
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -197,6 +199,23 @@ func findPropertyFromSrc(proc string, path string) string {
 	return foundDir
 }
 
+func pathHasProcName(path, proc string) bool {
+	for true {
+		dir := filepath.Dir(path)
+		if len(dir) == 0 {
+			break
+		}
+		base := filepath.Base(dir)
+		if base == "src" {
+			return false
+		} else if base == proc {
+			return true
+		}
+		path = dir
+	}
+	return false
+}
+
 func determineProcessType(proc string) {
 	target := proc + ".ui.xml"
 
@@ -206,4 +225,13 @@ func determineProcessType(proc string) {
 			return
 		}
 	}
+}
+
+
+func getFileModtime(path string) string {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err.Error()
+	}
+	return info.ModTime().String()
 }
