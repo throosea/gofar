@@ -116,11 +116,11 @@ func main() {
 	}
 	build["user"] = strings.TrimSpace(user)
 	fmt.Printf("srcDir : %s\n", foundDir)
-	gitBranch := lib.ReadGitBranch(foundDir)
+	gitBranch, gitHaveDir := lib.ReadGitBranch(foundDir, proc, "")
 	if len(gitBranch) > 0 {
 		git := make(map[string]string)
 		git["branch"] = gitBranch
-		gitCommit := lib.ReadGitCommit(foundDir, gitBranch)
+		gitCommit := lib.ReadGitCommit(gitHaveDir, gitBranch)
 		git["commit"] = gitCommit
 		fmt.Printf("mark build info : branch=%s, commit=%s\n", gitBranch, gitCommit)
 		build["git"] = git

@@ -161,17 +161,26 @@ func Zipit(source, target string) error {
 	return err
 }
 
-func ReadGitBranch(srcDir string) string	{
+func ReadGitBranch(srcDir string, pgmName string, match string) (string, string)	{
+	if filepath.Base(srcDir) == "src" {
+		return "", srcDir
+	}
+
 	headFile := filepath.Join(srcDir, ".git", "HEAD")
 
 	dat, err := ioutil.ReadFile(headFile)
 	if err != nil {
-		return ""
+		if pgmName == match {
+			return "", srcDir
+		}
+		upperDir := filepath.Dir(srcDir)
+		upperMatch := filepath.Base(upperDir)
+		return ReadGitBranch(upperDir, pgmName, upperMatch)
 	}
 
 	head := strings.Trim(string(dat), " \r\n\t")
 	idx := strings.LastIndex(head, "/")
-	return head[idx+1:]
+	return head[idx+1:], srcDir
 }
 
 func ReadGitCommit(srcDir string, branch string) string {
