@@ -24,19 +24,22 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"throosea.com/gofar/lib"
-	"io/ioutil"
 	"strings"
-	"encoding/json"
+	"throosea.com/gofar/lib"
 	"time"
 )
 
-var resourceList []string
-var binprefix string
-var processType = "GENERAL"
+var (
+	binprefix string
+	resourceList []string
+	extraBinPath []string
+	processType = "GENERAL"
+)
 
 func main() {
 	if len(os.Args) < 2 {
@@ -46,6 +49,9 @@ func main() {
 	proc := os.Args[1]
 	if len(os.Args) >= 3 {
 		binprefix = os.Args[2]
+		if len(os.Args) > 3 {
+			extraBinPath = os.Args[3:]
+		}
 	}
 	gopath := os.Getenv("GOPATH")
 
@@ -53,6 +59,19 @@ func main() {
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", e.Error())
 		return
+	}
+
+	if len(extraBinPath) > 0 {
+		extraPathList := make([]string, 0)
+		for _, v := range extraBinPath {
+			p, e := lib.EnsureBinary(binprefix, v, gopath)
+			if e != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", e.Error())
+				return
+			}
+			extraPathList = append(extraPathList, p)
+		}
+		extraBinPath = extraPathList
 	}
 
 	fmt.Printf("binpath : %s (%s)\n", binpath, getFileModtime(binpath))
@@ -92,6 +111,18 @@ func main() {
 	}
 	os.Chmod(targetBin, 0755)
 
+	for _, v := range extraBinPath {
+		p := filepath.Base(v)
+		targetBin := filepath.Join(tmpDir, p)
+		err = lib.CopyFile(v, targetBin)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s\n", e.Error())
+			return
+		}
+		os.Chmod(targetBin, 0755)
+		fmt.Printf("extra binpath : %s (%s)\n", v, getFileModtime(v))
+	}
+
 	for _, r := range resourceList {
 		target := filepath.Join(tmpDir, filepath.Base(r))
 		err = lib.CopyFile(r, target)
@@ -105,6 +136,13 @@ func main() {
 	m := make(map[string]interface{})
 	m["process"] = proc
 	m["process_type"] = processType
+	if len(extraBinPath) > 0 {
+		binNameList := make([]string, 0)
+		for _, v := range extraBinPath	{
+			binNameList = append(binNameList, filepath.Base(v))
+		}
+		m["extra_bin"] = binNameList
+	}
 	build := make(map[string]interface{})
 	zoneName, _ := time.Now().Zone()
 	build["time"] = time.Now().Format(yyyyMMddHHmmss) + " " + zoneName
