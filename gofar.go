@@ -25,6 +25,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -35,62 +36,115 @@ import (
 )
 
 var (
-	binprefix string
 	resourceList []string
-	extraBinPath []string
 	processType = "GENERAL"
 )
 
-func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "you have to specify program name. e.g) gofar mmbatch linux_amd64\n")
-		return
+var usage = `usage: %s [option] file os_arc
+
+golang fatima package builder
+
+positional arguments:
+  file                  program name
+  os_arc                optional. e.g) linux_amd64
+
+optional arguments:
+  -b  string
+		extra binaries. e.g) extrabin1,extrabin2,extrabin3
+`
+
+var cmdFlag CmdFlags
+
+type CmdFlags struct {
+	ProgramName	string
+	OsArc 		string
+	ExtraBin	[]string
+}
+
+func (c CmdFlags) String() string {
+	extra := ""
+	for i, v := range c.ExtraBin {
+		if i > 0 {
+			extra += ","
+		}
+		extra += v
 	}
-	proc := os.Args[1]
-	if len(os.Args) >= 3 {
-		binprefix = os.Args[2]
-		if len(os.Args) > 3 {
-			extraBinPath = os.Args[3:]
+	return fmt.Sprintf("programName=[%s], osArc=[%s], extra=[%s]", c.ProgramName, c.OsArc, extra)
+}
+
+func parseCmdLines()	bool	{
+	flag.Usage = func() {
+		fmt.Printf(string(usage), os.Args[0])
+	}
+
+	var extraBinList string
+	flag.StringVar(&extraBinList, "b", "", "extra binaries. e.g) extrabin1,extrabin2,extrabin3")
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
+		flag.Usage()
+		return false
+	}
+
+	cmdFlag.ProgramName = flag.Args()[0]
+	if len(flag.Args()) >= 2 {
+		cmdFlag.OsArc = flag.Args()[1]
+	}
+
+	if len(extraBinList) > 0 {
+		cmdFlag.ExtraBin = make([]string, 0)
+		for _, v := range strings.Split(extraBinList, ",")	{
+			cmdFlag.ExtraBin = append(cmdFlag.ExtraBin, strings.TrimSpace(v))
 		}
 	}
+
+	//fmt.Printf("%s\n", cmdFlag)
+
 	gopath := os.Getenv("GOPATH")
 
-	binpath, e := lib.EnsureBinary(binprefix, proc, gopath)
+	if len(cmdFlag.ExtraBin) > 0 {
+		extraPathList := make([]string, 0)
+		for _, v := range cmdFlag.ExtraBin {
+			p, e := lib.EnsureBinary(cmdFlag.OsArc, v, gopath)
+			if e != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", e.Error())
+				return false
+			}
+			extraPathList = append(extraPathList, p)
+		}
+		cmdFlag.ExtraBin = extraPathList
+	}
+
+	return true
+}
+
+func main() {
+	if !parseCmdLines() {
+		return
+	}
+
+	gopath := os.Getenv("GOPATH")
+
+	binpath, e := lib.EnsureBinary(cmdFlag.OsArc, cmdFlag.ProgramName, gopath)
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", e.Error())
 		return
 	}
 
-	if len(extraBinPath) > 0 {
-		extraPathList := make([]string, 0)
-		for _, v := range extraBinPath {
-			p, e := lib.EnsureBinary(binprefix, v, gopath)
-			if e != nil {
-				fmt.Fprintf(os.Stderr, "%s\n", e.Error())
-				return
-			}
-			extraPathList = append(extraPathList, p)
-		}
-		extraBinPath = extraPathList
-	}
-
 	fmt.Printf("binpath : %s (%s)\n", binpath, getFileModtime(binpath))
 	resourceList = make([]string, 0)
-	//foundDir := findPropertyFromSrc(proc + ".", filepath.Join(gopath, "src"))
-	foundDir := findPropertyFromSrc(proc, filepath.Join(gopath, "src"))
+	foundDir := findPropertyFromSrc(cmdFlag.ProgramName, filepath.Join(gopath, "src"))
 	if len(resourceList) == 0 {
-		fmt.Fprintf(os.Stderr, "not found %s resource\n", proc)
+		fmt.Fprintf(os.Stderr, "not found %s resource\n", cmdFlag.ProgramName)
 		return
 	}
 
-	farDir := filepath.Join(gopath, "far", proc)
+	farDir := filepath.Join(gopath, "far", cmdFlag.ProgramName)
 
-	determineProcessType(proc)
+	determineProcessType(cmdFlag.ProgramName)
 
 	lib.EnsureDirectory(farDir)
-	//farName := time.Now().Format("2006-01-02_15-04-05.far")
-	//farName = fmt.Sprintf("%s_%s", proc, farName)
-	farName := fmt.Sprintf("%s.far", proc)
+	farName := fmt.Sprintf("%s.far", cmdFlag.ProgramName)
 	farPath := filepath.Join(farDir, farName)
 
 	fmt.Printf("target : %s\n", farPath)
@@ -103,7 +157,7 @@ func main() {
 	defer os.RemoveAll(tmpDir) // clean up
 
 	// binary 복사
-	targetBin := filepath.Join(tmpDir, proc)
+	targetBin := filepath.Join(tmpDir, cmdFlag.ProgramName)
 	err = lib.CopyFile(binpath, targetBin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", e.Error())
@@ -111,7 +165,7 @@ func main() {
 	}
 	os.Chmod(targetBin, 0755)
 
-	for _, v := range extraBinPath {
+	for _, v := range cmdFlag.ExtraBin {
 		p := filepath.Base(v)
 		targetBin := filepath.Join(tmpDir, p)
 		err = lib.CopyFile(v, targetBin)
@@ -134,11 +188,11 @@ func main() {
 
 	// create deployment.json
 	m := make(map[string]interface{})
-	m["process"] = proc
+	m["process"] = cmdFlag.ProgramName
 	m["process_type"] = processType
-	if len(extraBinPath) > 0 {
+	if len(cmdFlag.ExtraBin) > 0 {
 		binNameList := make([]string, 0)
-		for _, v := range extraBinPath	{
+		for _, v := range cmdFlag.ExtraBin	{
 			binNameList = append(binNameList, filepath.Base(v))
 		}
 		m["extra_bin"] = binNameList
@@ -154,7 +208,7 @@ func main() {
 	}
 	build["user"] = strings.TrimSpace(user)
 	fmt.Printf("srcDir : %s\n", foundDir)
-	gitBranch, gitHaveDir := lib.ReadGitBranch(foundDir, proc, "")
+	gitBranch, gitHaveDir := lib.ReadGitBranch(foundDir, cmdFlag.ProgramName, "")
 	if len(gitBranch) > 0 {
 		git := make(map[string]string)
 		git["branch"] = gitBranch
