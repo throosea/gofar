@@ -144,6 +144,7 @@ func main() {
 		binpath, e = lib.EnsureBinaryWithPath(cmdFlag.OsArc, cmdFlag.ProgramName, "", workingDir)
 		if e != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", e.Error())
+			os.Exit(-1)
 			return
 		}
 		outsideGopath = true
@@ -157,6 +158,7 @@ func main() {
 		foundDir = findPropertyFromSrc(cmdFlag.ProgramName, workingDir)
 		if len(resourceList) == 0 {
 			fmt.Fprintf(os.Stderr, "not found %s resource\n", cmdFlag.ProgramName)
+			os.Exit(-1)
 			return
 		}
 	}
@@ -207,6 +209,7 @@ func main() {
 		err = lib.CopyFile(r, target)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", e.Error())
+			os.Exit(-1)
 			return
 		}
 	}
@@ -253,6 +256,7 @@ func main() {
 	err = ioutil.WriteFile(depfile, b, 0644)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		os.Exit(-1)
 		return
 	}
 
