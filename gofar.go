@@ -269,15 +269,19 @@ const (
 )
 
 var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh", "yml"}
+var excludeList = [...]string{"deployment.yaml", "deployment.yml"}
 
 func findPropertyFromSrc(proc string, path string) string {
+	fmt.Printf("findPropertyFromSrc : %s\n", path)
 	foundDir := path
 	candidate := false
 	//if strings.HasPrefix(proc, filepath.Base(path)) {
 	if filepath.Base(path) == proc {
 		candidate = true
 	} else if filepath.Base(path) == "cmd" {
-		if outsideGopath || pathHasProcName(path, proc) {
+		if outsideGopath {
+			candidate = true
+		} else if pathHasProcName(path, proc) {
 			candidate = true
 		}
 	}
@@ -306,8 +310,10 @@ func findPropertyFromSrc(proc string, path string) string {
 		}
 	}
 
-	if len(resourceList) > 0 {
-		return foundDir
+	if !outsideGopath {
+		if len(resourceList) > 0 {
+			return foundDir
+		}
 	}
 
 	for _, dir := range dirList {
