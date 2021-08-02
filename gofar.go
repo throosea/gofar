@@ -141,8 +141,12 @@ func main() {
 	resourceList = make([]string, 0)
 	foundDir := findPropertyFromSrc(cmdFlag.ProgramName, filepath.Join(gopath, "src"))
 	if len(resourceList) == 0 {
-		fmt.Fprintf(os.Stderr, "not found %s resource\n", cmdFlag.ProgramName)
-		return
+		fmt.Fprintf(os.Stderr, "not found %s resource. try again from current directory\n", cmdFlag.ProgramName)
+		foundDir = findPropertyFromSrc(cmdFlag.ProgramName, ".")
+		if len(resourceList) == 0 {
+			fmt.Fprintf(os.Stderr, "not found %s resource\n", cmdFlag.ProgramName)
+			return
+		}
 	}
 
 	farDir := filepath.Join(gopath, "far", cmdFlag.ProgramName)
