@@ -37,7 +37,7 @@ import (
 
 var (
 	resourceList []string
-	processType = "GENERAL"
+	processType  = "GENERAL"
 )
 
 var usage = `usage: %s [option] file os_arc
@@ -56,9 +56,9 @@ optional arguments:
 var cmdFlag CmdFlags
 
 type CmdFlags struct {
-	ProgramName	string
-	OsArc 		string
-	ExtraBin	[]string
+	ProgramName string
+	OsArc       string
+	ExtraBin    []string
 }
 
 func (c CmdFlags) String() string {
@@ -72,7 +72,7 @@ func (c CmdFlags) String() string {
 	return fmt.Sprintf("programName=[%s], osArc=[%s], extra=[%s]", c.ProgramName, c.OsArc, extra)
 }
 
-func parseCmdLines()	bool	{
+func parseCmdLines() bool {
 	flag.Usage = func() {
 		fmt.Printf(string(usage), os.Args[0])
 	}
@@ -93,7 +93,7 @@ func parseCmdLines()	bool	{
 
 	if len(extraBinList) > 0 {
 		cmdFlag.ExtraBin = make([]string, 0)
-		for _, v := range strings.Split(extraBinList, ",")	{
+		for _, v := range strings.Split(extraBinList, ",") {
 			cmdFlag.ExtraBin = append(cmdFlag.ExtraBin, strings.TrimSpace(v))
 		}
 	}
@@ -107,8 +107,11 @@ func parseCmdLines()	bool	{
 		for _, v := range cmdFlag.ExtraBin {
 			p, e := lib.EnsureBinary(cmdFlag.OsArc, v, gopath)
 			if e != nil {
-				fmt.Fprintf(os.Stderr, "%s\n", e.Error())
-				return false
+				p, e = lib.EnsureBinaryWithPath(cmdFlag.OsArc, cmdFlag.ProgramName, "", ".")
+				if e != nil {
+					fmt.Fprintf(os.Stderr, "%s\n", e.Error())
+					return false
+				}
 			}
 			extraPathList = append(extraPathList, p)
 		}
@@ -127,8 +130,11 @@ func main() {
 
 	binpath, e := lib.EnsureBinary(cmdFlag.OsArc, cmdFlag.ProgramName, gopath)
 	if e != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", e.Error())
-		return
+		binpath, e = lib.EnsureBinaryWithPath(cmdFlag.OsArc, cmdFlag.ProgramName, "", ".")
+		if e != nil {
+			fmt.Fprintf(os.Stderr, "%s\n", e.Error())
+			return
+		}
 	}
 
 	fmt.Printf("binpath : %s (%s)\n", binpath, getFileModtime(binpath))
@@ -192,7 +198,7 @@ func main() {
 	m["process_type"] = processType
 	if len(cmdFlag.ExtraBin) > 0 {
 		binNameList := make([]string, 0)
-		for _, v := range cmdFlag.ExtraBin	{
+		for _, v := range cmdFlag.ExtraBin {
 			binNameList = append(binNameList, filepath.Base(v))
 		}
 		m["extra_bin"] = binNameList
@@ -318,7 +324,6 @@ func determineProcessType(proc string) {
 		}
 	}
 }
-
 
 func getFileModtime(path string) string {
 	info, err := os.Stat(path)

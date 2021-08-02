@@ -24,24 +24,28 @@
 package lib
 
 import (
-	"path/filepath"
-	"fmt"
-	"os"
-	"io"
-	"strings"
 	"archive/zip"
-	"io/ioutil"
-	"errors"
-	"os/exec"
 	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 func EnsureBinary(binprefix string, proc string, gopathDir string) (string, error) {
+	return EnsureBinaryWithPath(binprefix, proc, "bin", gopathDir)
+}
+
+func EnsureBinaryWithPath(binprefix string, proc string, bindir string, gopathDir string) (string, error) {
 	var binpath string
 	if len(binprefix) == 0 {
-		binpath = filepath.Join(gopathDir, "bin", proc)
+		binpath = filepath.Join(gopathDir, bindir, proc)
 	} else {
-		binpath = filepath.Join(gopathDir, "bin", binprefix, proc)
+		binpath = filepath.Join(gopathDir, bindir, binprefix, proc)
 	}
 
 	return binpath, CheckFileExist(binpath)
@@ -93,7 +97,6 @@ func CopyFile(src string, dst string) error {
 
 	return nil
 }
-
 
 func Zipit(source, target string) error {
 	zipfile, err := os.Create(target)
@@ -161,7 +164,7 @@ func Zipit(source, target string) error {
 	return err
 }
 
-func ReadGitBranch(srcDir string, pgmName string, match string) (string, string)	{
+func ReadGitBranch(srcDir string, pgmName string, match string) (string, string) {
 	if filepath.Base(srcDir) == "src" {
 		return "", srcDir
 	}
