@@ -267,7 +267,6 @@ const (
 var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh", "yml"}
 
 func findPropertyFromSrc(proc string, path string) string {
-	fmt.Printf("findPropertyFromSrc : %s\n", path)
 	foundDir := path
 	candidate := false
 	//if strings.HasPrefix(proc, filepath.Base(path)) {
