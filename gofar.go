@@ -54,6 +54,7 @@ optional arguments:
 `
 
 var cmdFlag CmdFlags
+var version = "0.0.1"
 
 type CmdFlags struct {
 	ProgramName string
@@ -121,7 +122,16 @@ func parseCmdLines() bool {
 	return true
 }
 
+var outsideGopath = false
+
 func main() {
+	if len(os.Args) > 1 {
+		if os.Args[1] == "version" {
+			fmt.Printf("gofar version %s\n", version)
+			return
+		}
+	}
+
 	if !parseCmdLines() {
 		return
 	}
@@ -136,6 +146,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "%s\n", e.Error())
 			return
 		}
+		outsideGopath = true
 	}
 
 	fmt.Printf("binpath : %s (%s)\n", binpath, getFileModtime(binpath))
@@ -253,7 +264,7 @@ const (
 	yyyyMMddHHmmss = "2006-01-02 15:04:05"
 )
 
-var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh"}
+var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh", "yml"}
 
 func findPropertyFromSrc(proc string, path string) string {
 	fmt.Printf("findPropertyFromSrc : %s\n", path)
@@ -263,7 +274,7 @@ func findPropertyFromSrc(proc string, path string) string {
 	if filepath.Base(path) == proc {
 		candidate = true
 	} else if filepath.Base(path) == "cmd" {
-		if pathHasProcName(path, proc) {
+		if outsideGopath || pathHasProcName(path, proc) {
 			candidate = true
 		}
 	}
