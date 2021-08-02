@@ -152,8 +152,11 @@ func main() {
 
 	farDir := filepath.Join(gopath, "far", cmdFlag.ProgramName)
 
+	fmt.Printf("farDir : %s\n", farDir)
+
 	determineProcessType(cmdFlag.ProgramName)
 
+	fmt.Printf("EnsureDirectory farDir : %s\n", farDir)
 	lib.EnsureDirectory(farDir)
 	farName := fmt.Sprintf("%s.far", cmdFlag.ProgramName)
 	farPath := filepath.Join(farDir, farName)
