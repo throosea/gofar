@@ -127,10 +127,11 @@ func main() {
 	}
 
 	gopath := os.Getenv("GOPATH")
+	workingDir, _ := os.Getwd()
 
 	binpath, e := lib.EnsureBinary(cmdFlag.OsArc, cmdFlag.ProgramName, gopath)
 	if e != nil {
-		binpath, e = lib.EnsureBinaryWithPath(cmdFlag.OsArc, cmdFlag.ProgramName, "", ".")
+		binpath, e = lib.EnsureBinaryWithPath(cmdFlag.OsArc, cmdFlag.ProgramName, "", workingDir)
 		if e != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", e.Error())
 			return
@@ -142,7 +143,7 @@ func main() {
 	foundDir := findPropertyFromSrc(cmdFlag.ProgramName, filepath.Join(gopath, "src"))
 	if len(resourceList) == 0 {
 		fmt.Fprintf(os.Stderr, "not found %s resource. try again from current directory\n", cmdFlag.ProgramName)
-		foundDir = findPropertyFromSrc(cmdFlag.ProgramName, ".")
+		foundDir = findPropertyFromSrc(cmdFlag.ProgramName, workingDir)
 		if len(resourceList) == 0 {
 			fmt.Fprintf(os.Stderr, "not found %s resource\n", cmdFlag.ProgramName)
 			return
