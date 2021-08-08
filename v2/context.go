@@ -104,9 +104,9 @@ func (b *BuildContext) Packaging() error {
 	}
 
 	log.Printf("working directory : %s\n", b.workingDir)
-	//defer func() {
-	//	os.RemoveAll(b.workingDir)
-	//}()
+	defer func() {
+		os.RemoveAll(b.workingDir)
+	}()
 
 	err = b.prepareBinary()
 	if err != nil {
