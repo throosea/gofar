@@ -23,8 +23,6 @@
 
 package main
 
-import "throosea.com/gofar/v2"
-
 func main() {
-	v2.Gofar()
+	Gofar()
 }

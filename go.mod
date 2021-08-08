@@ -1,3 +1,3 @@
-module throosea.com/gofar
+module throosea/gofar
 
-go 1.14
+go 1.16

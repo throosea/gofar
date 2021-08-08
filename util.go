@@ -19,11 +19,11 @@
  * //
  * // @project fatima
  * // @author DeockJin Chung (jin.freestyle@gmail.com)
- * // @date 21. 8. 8. 오후 4:04
+ * // @date 21. 8. 8. 오후 9:24
  * //
  */
 
-package v2
+package main
 
 import (
 	"archive/zip"
