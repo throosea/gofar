@@ -426,7 +426,18 @@ func determineProjectBaseDir(baseDir, procName string) (string, error) {
 	// search $GOPATH/src
 	gopathSrcDir := filepath.Join(getGOPath(), "src")
 
-	return FindDirectory(gopathSrcDir, procName)
+	guessDir, err := FindDirectory(gopathSrcDir, procName)
+	if err != nil {
+		return guessDir, err
+	}
+
+	guessBase := filepath.Dir(guessDir)
+	if filepath.Base(guessBase) != "cmd" {
+		return guessDir, nil
+	}
+
+	// if parent is "cmd", let's assume project base to parent of cmd
+	return filepath.Dir(guessBase), nil
 }
 
 // find project base dir
