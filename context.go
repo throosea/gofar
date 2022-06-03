@@ -250,7 +250,7 @@ func (b *BuildContext) loadResourceFromDesginatedDir() error {
 	return nil
 }
 
-var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh", "yml"}
+var includeSuffixList = [...]string{"properties", "xml", "json", "yaml", "sh", "yml", "dat", "p8", "rb", "rbw", "lua"}
 
 func (b *BuildContext) loadResourceFromProject() error {
 	resourceFileList, err := findResourceFromDirectory(b.ProjectBaseDir)
@@ -264,7 +264,9 @@ func (b *BuildContext) loadResourceFromProject() error {
 		if err != nil {
 			return fmt.Errorf("fail to copy resource %s : %s", resourceFilePath, err.Error())
 		}
-		if strings.HasSuffix(targetFile, ".sh") {
+		if strings.HasSuffix(targetFile, ".sh") ||
+			strings.HasSuffix(targetFile, ".rb") ||
+			strings.HasSuffix(targetFile, ".lua") {
 			os.Chmod(targetFile, 0755)
 		}
 	}
