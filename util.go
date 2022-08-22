@@ -261,7 +261,7 @@ func ExecuteShell(wd, command string) (string, error) {
 func ReadGitBranch(baseDir string) (string, error) {
 	headFile := filepath.Join(baseDir, ".git", "HEAD")
 
-	dat, err := ioutil.ReadFile(headFile)
+	dat, err := os.ReadFile(headFile)
 	if err != nil {
 		return "", fmt.Errorf("not found git head")
 	}
@@ -273,7 +273,7 @@ func ReadGitBranch(baseDir string) (string, error) {
 
 func ReadGitCommit(baseDir string, branch string) string {
 	commitFile := filepath.Join(baseDir, ".git", "refs", "heads", branch)
-	dat, err := ioutil.ReadFile(commitFile)
+	dat, err := os.ReadFile(commitFile)
 	if err != nil {
 		return ""
 	}
