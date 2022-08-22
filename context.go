@@ -183,17 +183,21 @@ func (b *BuildContext) createDeployment() error {
 		user = "unknown"
 	}
 	build["user"] = strings.TrimSpace(user)
-	gitBranch, err := ReadGitBranch(b.ProjectBaseDir)
-	if err == nil {
-		if len(gitBranch) > 0 {
-			git := make(map[string]string)
-			git["branch"] = gitBranch
-			gitCommit := ReadGitCommit(b.ProjectBaseDir, gitBranch)
-			git["commit"] = gitCommit
-			fmt.Printf("\n>> mark build info : branch=%s, commit=%s\n", gitBranch, gitCommit)
-			build["git"] = git
-		}
+	gitInfo := readGitInfo(b.ProjectBaseDir)
+	if gitInfo.Valid {
+		build["git"] = gitInfo.ToMap()
 	}
+	//gitBranch, err := ReadGitBranch(b.ProjectBaseDir)
+	//if err == nil {
+	//	if len(gitBranch) > 0 {
+	//		git := make(map[string]string)
+	//		git["branch"] = gitBranch
+	//		gitCommit := ReadGitCommit(b.ProjectBaseDir, gitBranch)
+	//		git["commit"] = gitCommit
+	//		fmt.Printf("\n>> mark build info : branch=%s, commit=%s\n", gitBranch, gitCommit)
+	//		build["git"] = git
+	//	}
+	//}
 
 	m["build"] = build
 
@@ -203,7 +207,7 @@ func (b *BuildContext) createDeployment() error {
 	}
 
 	depfile := filepath.Join(b.workingDir, "deployment.json")
-	err = ioutil.WriteFile(depfile, dat, 0644)
+	err = os.WriteFile(depfile, dat, 0644)
 	if err != nil {
 		return fmt.Errorf("fail to write deployment.json : %s", err.Error())
 	}
